@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GGStream - Cinematic Genesis</title>
+  <style>
+    /* Variabel Warna */
+    :root {
+      --bg-color: #fafafa;
+      --text-color: #0f0f0f;
+      --card-bg: #ffffff;
+      --header-bg: rgba(255, 255, 255, 0.9);
+      --border-color: #eee;
+      --secondary-bg: #f2f2f2;
+      --sub-text: #606060;
+      --shadow: rgba(0,0,0,0.04);
+      --splash-bg: #000000; /* Genesis selalu mulai dari kegelapan */
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #0f0f0f;
+      --text-color: #ffffff;
+      --card-bg: #1e1e1e;
+      --header-bg: rgba(15, 15, 15, 0.9);
+      --border-color: #333;
+      --secondary-bg: #2a2a2a;
+      --sub-text: #aaaaaa;
+      --shadow: rgba(0,0,0,0.5);
+    }
+
+    body { margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); padding-bottom: 75px; color: var(--text-color); transition: background 0.3s; }
+    .page { display: none; animation: fadeIn 0.4s ease-out; padding: 10px; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* --- CINEMATIC GENESIS SPLASH SCREEN --- */
+    #splash-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      overflow: hidden;
+      transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 1.2s;
+    }
+
+    /* Efek Cahaya Latar (The Genesis Light) */
+    .genesis-glow {
+      position: absolute;
+      width: 150px; height: 150px;
+      background: radial-gradient(circle, rgba(255,0,0,0.4) 0%, rgba(255,0,0,0) 70%);
+      filter: blur(40px);
+      animation: core-glow 3s infinite alternate ease-in-out;
+    }
+
+    .splash-content {
+      position: relative;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .splash-logo {
+      font-size: 32px;
+      font-weight: 200; /* Lebih tipis agar terlihat premium */
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 15px; /* Cinematic spacing */
+      margin-bottom: 10px;
+      opacity: 0;
+      animation: genesis-text 2.5s forwards ease-out;
+    }
+
+    .splash-logo span {
+      color: #f00;
+      font-weight: 800;
+      text-shadow: 0 0 20px rgba(255,0,0,0.6);
+    }
+
+    .genesis-line {
+      width: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #fff, transparent);
+      margin: 0 auto;
+      opacity: 0.5;
+      animation: line-expand 2s 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .genesis-subtext {
+      font-size: 10px;
+      color: #555;
+      letter-spacing: 4px;
+      margin-top: 15px;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeIn 1.5s 1.5s forwards;
+    }
+
+    @keyframes genesis-text {
+      0% { opacity: 0; transform: scale(0.9); letter-spacing: 25px; filter: blur(10px); }
+      100% { opacity: 1; transform: scale(1); letter-spacing: 12px; filter: blur(0); }
+    }
+
+    @keyframes line-expand {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    @keyframes core-glow {
+      0% { transform: scale(1); opacity: 0.3; }
+      100% { transform: scale(1.5); opacity: 0.6; }
+    }
+
+    /* Rest of the UI Styles */
+    .header { display: flex; justify-content: space-between; padding: 12px 15px; align-items: center; position: sticky; top: 0; background: var(--header-bg); backdrop-filter: blur(10px); z-index: 100; border-bottom: 1px solid var(--border-color); }
+    .search-wrapper { position: relative; flex-grow: 1; margin: 0 15px; }
+    .search-container { display: flex; align-items: center; background: var(--secondary-bg); padding: 6px 15px; border-radius: 20px; }
+    .search-container input { border: none; background: transparent; outline: none; font-size: 14px; width: 100%; color: var(--text-color); }
+    .video { background: var(--card-bg); border-radius: 16px; margin-bottom: 20px; cursor: pointer; box-shadow: 0 2px 8px var(--shadow); overflow: hidden; border: 1px solid var(--border-color); }
+    .video img.thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+    .info { display: flex; padding: 12px; gap: 12px; }
+    .info img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
+    .v-text b { font-size: 14px; display: block; margin-bottom: 4px; }
+    .v-text small { color: var(--sub-text); font-size: 12px; }
+    .actions-bar { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; scrollbar-width: none; }
+    .action-btn { display: flex; align-items: center; gap: 6px; background: var(--secondary-bg); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; color: var(--text-color); }
+    .action-btn.active { background: #2563eb; color: white; }
+    .subscribeBtn { background: var(--text-color); color: var(--bg-color); border: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+    .subscribeBtn.following { background: var(--secondary-bg); color: var(--text-color); }
+    .navbar { position: fixed; bottom: 0; width: 100%; background: var(--header-bg); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid var(--border-color); z-index: 1000; }
+    .nav-item { font-size: 20px; cursor: pointer; color: #888; text-align: center; }
+    .nav-item.active { color: #f00; }
+    .nav-label { font-size: 10px; display: block; }
+    .h-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 10px; scrollbar-width: none; }
+    .card-small { min-width: 140px; background: var(--card-bg); border-radius: 12px; padding: 8px; border: 1px solid var(--border-color); box-shadow: 0 2px 5px var(--shadow); font-size: 11px; cursor: pointer; }
+    .card-small img { width: 100%; border-radius: 8px; aspect-ratio: 16/9; object-fit: cover; margin-bottom: 5px; }
+    .theme-toggle { cursor: pointer; font-size: 20px; user-select: none; }
+    .history-dropdown { position: absolute; top: 40px; left: 0; width: 100%; background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 15px var(--shadow); display: none; z-index: 200; border: 1px solid var(--border-color); }
+    .history-item { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+    .no-scroll { overflow: hidden; }
+  </style>
+</head>
+<body class="no-scroll">
+
+<div id="splash-screen">
+  <div class="genesis-glow"></div>
+  <div class="splash-content">
+    <div class="splash-logo">GG<span>STREAM</span></div>
+    <div class="genesis-line"></div>
+    <div class="genesis-subtext">Initializing Genesis Core</div>
+  </div>
+</div>
+
+<div id="homePage" class="page" style="display: block;">
+  <div class="header">
+    <div style="font-weight:bold; font-size:22px; color:#f00;">▶ GGStream</div>
+    <div class="search-wrapper">
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Cari..." onfocus="showHistory()" onblur="setTimeout(hideHistory, 250)" onkeyup="if(event.key==='Enter')handleSearch()">
+        <span onclick="handleSearch()" style="cursor:pointer">🔍</span>
+      </div>
+      <div id="historyDropdown" class="history-dropdown"></div>
+    </div>
+    <div class="theme-toggle" onclick="toggleTheme()" id="themeIcon">🌙</div>
+  </div>
+  <div id="videoContainer"></div>
+</div>
+
+<div id="playerPage" class="page">
+  <div onclick="goHome()" style="margin-bottom:12px; cursor:pointer; font-weight:bold;">✕ Tutup</div>
+  <iframe id="playerMain" style="width:100%; aspect-ratio:16/9; border-radius:12px; border:none; background:#000;" src="" allowfullscreen></iframe>
+  <div style="padding:10px 5px;">
+    <b id="pTitle" style="font-size:17px;"></b>
+    <div class="actions-bar">
+      <div id="btnLike" class="action-btn" onclick="handleLike()">👍 Like</div>
+      <div id="btnDislike" class="action-btn" onclick="handleDislike()">👎 Dislike</div>
+      <div class="action-btn" onclick="alert('Link disalin!')">↪️ Share</div>
+      <div id="btnSave" class="action-btn" onclick="handleSave()">📥 Simpan</div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:12px; border-radius:12px; border:1px solid var(--border-color);">
+      <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" id="chanTrigger">
+        <img id="pChanImg" src="" style="width:38px; height:38px; border-radius:50%;">
+        <div>
+          <b id="pChanName" style="font-size:14px; display: block;"></b>
+          <small id="pFollowCount" style="color: var(--sub-text); font-size: 11px;"></small>
+        </div>
+      </div>
+      <button id="pSubBtn" class="subscribeBtn" onclick="toggleFollowGlobal()">Follow</button>
+    </div>
+  </div>
+</div>
+
+<div id="channelPage" class="page">
+  <div onclick="goHome()" style="cursor:pointer; margin-bottom:15px;">⬅ Kembali</div>
+  <div style="text-align:center; padding:20px; background:var(--card-bg); border-radius:12px; margin-bottom:15px; border: 1px solid var(--border-color);">
+    <img id="cImg" src="" style="width:70px; height:70px; border-radius:50%; margin-bottom:10px;">
+    <h2 id="cName" style="margin:5px 0;"></h2>
+    <button id="cSubBtn" class="subscribeBtn" onclick="toggleFollowGlobal()">Follow</button>
+    <div style="margin-top: 8px;"><small id="cFollowCount" style="color:var(--sub-text); font-weight: 500;"></small></div>
+  </div>
+  <div id="channelVideoList"></div>
+</div>
+
+<div id="subsPage" class="page">
+  <h2 style="padding:10px;">Subscriptions</h2>
+  <div id="subsList"></div>
+</div>
+
+<div id="profilePage" class="page">
+  <div style="text-align:center; padding: 30px;">
+    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Rafael" style="width:80px; border-radius:50%; background:var(--card-bg); padding:5px; box-shadow:0 4px 10px var(--shadow);">
+    <h2 style="margin: 10px 0 0 0;">Rafael</h2>
+    <p style="color:var(--sub-text); font-size:12px; margin: 5px 0 20px 0;">@Avrozz • View Profile</p>
+  </div>
+  <h3 style="padding:0 10px; margin:0;">History 🕒</h3>
+  <div id="historyList" class="h-scroll"></div>
+  <h3 style="padding:0 10px; margin:20px 0 0 0;">Saved Videos 📥</h3>
+  <div id="savedList" class="h-scroll"></div>
+</div>
+
+<div class="navbar">
+  <div id="navHome" class="nav-item active" onclick="navTo('homePage', this)">🏠<span class="nav-label">Home</span></div>
+  <div id="navSubs" class="nav-item" onclick="navTo('subsPage', this)">📺<span class="nav-label">Subs</span></div>
+  <div id="navProf" class="nav-item" onclick="navTo('profilePage', this)">👤<span class="nav-label">You</span></div>
+</div>
+
+<script>
+// Logic Dark Mode
+function toggleTheme() {
+  const body = document.body;
+  const icon = document.getElementById('themeIcon');
+  if (body.getAttribute('data-theme') === 'dark') {
+    body.removeAttribute('data-theme');
+    icon.innerText = '🌙';
+    localStorage.setItem('theme', 'light');
+  } else {
+    body.setAttribute('data-theme', 'dark');
+    icon.innerText = '☀️';
+    localStorage.setItem('theme', 'dark');
+  }
+}
+
+if (localStorage.getItem('theme') === 'dark') {
+  document.body.setAttribute('data-theme', 'dark');
+  const icon = document.getElementById('themeIcon');
+  if(icon) icon.innerText = '☀️';
+}
+
+// Logic Animasi Splash Screen (Sedikit lebih lama agar cinematic terasa)
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    splash.style.visibility = 'hidden';
+    document.body.classList.remove('no-scroll');
+  }, 3500); 
+});
+
+const videoData = [
+  { id: '2FE7pOBbRn8', title: 'We Built America in Minecraft', channel: 'MrBeast Gaming', img: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MrBeast', followers: 12500000 },
+  { id: 'xiFsAjUDwdU', title: 'Beat This Race, Win This Lamborghini!', channel: 'MrBeast Gaming', img: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MrBeast', followers: 12500000 },
+  { id: 'cMqfTJdbXpY', title: 'Aziz Hedra - Somebody\'s Pleasure', channel: 'AzizHedraaVEVO', img: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aziz', followers: 850000 },
+  { id: 'OqBuXQLR4Y8', title: 'Rex Orange County - Best Friend', channel: 'Rex Orange County', img: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rex', followers: 2300000 }
+];
+
+let following = new Set(), watchHistory = [], savedVideos = [], searchHistory = ["MrBeast", "Aziz"], activeChanName = "", currentId = "";
+
+function formatNumber(num) {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
+  return num;
+}
+
+function renderList(containerId, data) {
+  const container = document.getElementById(containerId);
+  if(data.length === 0) { container.innerHTML = "<p style='text-align:center; padding:50px;'>Kosong.</p>"; return; }
+  container.innerHTML = data.map(v => `
+    <div class="video">
+      <img class="thumb" src="https://img.youtube.com/vi/${v.id}/maxresdefault.jpg" onclick="playVideo('${v.id}')">
+      <div class="info">
+        <img src="${v.img}" onclick="openChannel('${v.channel}')">
+        <div class="v-text">
+          <b onclick="playVideo('${v.id}')">${v.title}</b>
+          <small onclick="openChannel('${v.channel}')">${v.channel} • 23M views</small>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function playVideo(id) {
+  const v = videoData.find(x => x.id === id);
+  currentId = id; activeChanName = v.channel;
+  navTo('playerPage');
+  document.getElementById('playerMain').src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+  document.getElementById('pTitle').innerText = v.title;
+  document.getElementById('pChanName').innerText = v.channel;
+  document.getElementById('pChanImg').src = v.img;
+  document.getElementById('chanTrigger').onclick = () => openChannel(v.channel);
+  updateFollowUI();
+  updateSaveUI();
+  if(!watchHistory.includes(id)) watchHistory.unshift(id);
+  renderProfile();
+}
+
+function handleSave() {
+  if(savedVideos.includes(currentId)) {
+    savedVideos = savedVideos.filter(id => id !== currentId);
+  } else {
+    savedVideos.unshift(currentId);
+  }
+  updateSaveUI();
+  renderProfile();
+}
+
+function updateSaveUI() {
+  const btn = document.getElementById('btnSave');
+  const isSaved = savedVideos.includes(currentId);
+  if(btn) {
+    btn.classList.toggle('active', isSaved);
+    btn.innerText = isSaved ? '📥 Tersimpan' : '📥 Simpan';
+  }
+}
+
+function renderProfile() {
+  const hList = document.getElementById('historyList');
+  hList.innerHTML = watchHistory.map(id => {
+    const v = videoData.find(x => x.id === id);
+    return `<div class="card-small" onclick="playVideo('${id}')"><img src="https://img.youtube.com/vi/${id}/mqdefault.jpg"><b>${v.title.substring(0,15)}...</b></div>`;
+  }).join('');
+  const sList = document.getElementById('savedList');
+  if(savedVideos.length === 0) sList.innerHTML = `<small style='color:var(--sub-text); padding:10px;'>Belum ada video disimpan.</small>`;
+  else sList.innerHTML = savedVideos.map(id => {
+    const v = videoData.find(x => x.id === id);
+    return `<div class="card-small" onclick="playVideo('${id}')"><img src="https://img.youtube.com/vi/${id}/mqdefault.jpg"><b>${v.title.substring(0,15)}...</b></div>`;
+  }).join('');
+}
+
+function handleSearch(val) {
+  const query = (val || document.getElementById('searchInput').value).toLowerCase();
+  if(!query) return;
+  if(!searchHistory.includes(query)) searchHistory.unshift(query);
+  const filtered = videoData.filter(v => v.title.toLowerCase().includes(query) || v.channel.toLowerCase().includes(query));
+  navTo('homePage', document.getElementById('navHome'));
+  renderList('videoContainer', filtered);
+  hideHistory();
+}
+
+function openChannel(name) {
+  const data = videoData.find(v => v.channel === name);
+  activeChanName = name;
+  navTo('channelPage');
+  document.getElementById('cImg').src = data.img;
+  document.getElementById('cName').innerText = name;
+  updateFollowUI();
+  const cVids = videoData.filter(v => v.channel === name);
+  renderList('channelVideoList', cVids);
+}
+
+function toggleFollowGlobal() {
+  if(following.has(activeChanName)) following.delete(activeChanName);
+  else following.add(activeChanName);
+  updateFollowUI();
+  renderSubs();
+}
+
+function updateFollowUI() {
+  const isSub = following.has(activeChanName);
+  const data = videoData.find(v => v.channel === activeChanName);
+  if(!data) return;
+  const currentFollowers = isSub ? data.followers + 1 : data.followers;
+  const displayText = formatNumber(currentFollowers) + " followers";
+  const btns = [document.getElementById('pSubBtn'), document.getElementById('cSubBtn')];
+  btns.forEach(btn => { if(btn) { 
+    btn.innerText = isSub ? 'Following' : 'Follow'; 
+    btn.className = isSub ? 'subscribeBtn following' : 'subscribeBtn'; 
+  }});
+  const pCount = document.getElementById('pFollowCount');
+  const cCount = document.getElementById('cFollowCount');
+  if(pCount) pCount.innerText = displayText;
+  if(cCount) cCount.innerText = displayText;
+}
+
+function showHistory() {
+  const drop = document.getElementById('historyDropdown');
+  drop.innerHTML = searchHistory.map(h => `<div class="history-item" onclick="handleSearch('${h}')">🕒 ${h}</div>`).join('');
+  drop.style.display = 'block';
+}
+function hideHistory() { document.getElementById('historyDropdown').style.display = 'none'; }
+
+function renderSubs() {
+  const list = document.getElementById('subsList');
+  if(following.size === 0) { list.innerHTML = `<p style='text-align:center; padding:30px; color:var(--sub-text);'>Belum ada subscription.</p>`; return; }
+  list.innerHTML = [...following].map(name => {
+    const d = videoData.find(v => v.channel === name);
+    return `<div style="display:flex; align-items:center; gap:15px; padding:15px; background:var(--card-bg); margin:10px; border-radius:12px; border:1px solid var(--border-color);" onclick="openChannel('${name}')"><img src="${d.img}" style="width:35px; border-radius:50%;"><b>${name}</b></div>`;
+  }).join('');
+}
+
+function handleLike() { document.getElementById('btnLike').classList.toggle('active'); document.getElementById('btnDislike').classList.remove('active'); }
+function handleDislike() { document.getElementById('btnDislike').classList.toggle('active'); document.getElementById('btnLike').classList.remove('active'); }
+
+function navTo(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).style.display = 'block';
+  if(el) el.classList.add('active');
+  if(id !== 'playerPage') {
+    const p = document.getElementById('playerMain');
+    if(p) p.src = "";
+  }
+}
+
+function goHome() { navTo('homePage', document.getElementById('navHome')); renderList('videoContainer', videoData); }
+
+renderList('videoContainer', videoData);
+renderProfile();
+</script>
+</body>
+</html>
